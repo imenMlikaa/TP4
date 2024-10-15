@@ -1,28 +1,39 @@
-name: Deploy to GitHub Pages
-
+name: Build Project 
 on:
   push:
     branches:
       - main
 
+permissions: 
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
     steps:
-      - name: Checkout the code
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Download artifact
-        uses: actions/download-pages-artifact@v2
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v3
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Build project
+        run: npm run build
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          branch: gh-pages  # La branche gh-pages pour héberger le site
-          folder: ./build   # Le dossier contenant les fichiers à déployer
+          path: ./build
+  deploy:
+      environment:
+        name: github-pages
+        url: ${{ step.deployement.outputs.page_url }}
+      runs-on: ubuntu-latest
+      needs: build
+      steps: 
+      - name: Deploy to Github pages
+        id: deployement
+        uses: actions/deploy-pages@v4
